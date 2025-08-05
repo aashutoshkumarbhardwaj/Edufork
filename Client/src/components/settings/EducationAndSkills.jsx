@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 import { useUserProfile } from "../../contexts/UserProfileContext";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Trash2 } from "lucide-react";
 import UpdateButton from "./UpdateButton";
 const backendUrl = import.meta.env.VITE_API_URL;
 
@@ -73,7 +73,7 @@ function EducationAndSkills() {
         console.error("Error decoding token:", error);
       }
     }
-  }, [user]);
+  }, [user, fetchUserDetails]);
 
   useEffect(() => {
     if (!initialData) return;
@@ -90,12 +90,29 @@ function EducationAndSkills() {
     }));
   };
 
+  const handleClearField = (fieldName) => {
+    setProfileData((prev) => ({
+      ...prev,
+      [fieldName]: "",
+    }));
+  };
+
   const handleOtherDetailsChange = (key, value) => {
     setProfileData((prev) => ({
       ...prev,
       OtherDetails: {
         ...prev.OtherDetails,
         [key]: value,
+      },
+    }));
+  };
+
+  const handleClearOtherDetails = (key) => {
+    setProfileData((prev) => ({
+      ...prev,
+      OtherDetails: {
+        ...prev.OtherDetails,
+        [key]: "",
       },
     }));
   };
@@ -142,10 +159,9 @@ function EducationAndSkills() {
 
     setIsLoading(true);
     try {
+      // Send all fields including empty ones to allow clearing
       const updateData = {
-        ...Object.fromEntries(
-          Object.entries(profileData).filter(([_, v]) => v !== "" && v !== null)
-        ),
+        ...profileData,
       };
 
       const response = await axios.put(
@@ -185,178 +201,247 @@ function EducationAndSkills() {
               <label className="block text-md font-medium text-[var(--txt-dim)]">
                 University/Institution
               </label>
-              <input
-                type="text"
-                name="University"
-                value={profileData.University}
-                onChange={handleInputChange}
-                placeholder="e.g., Harvard University"
-                className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all"
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  name="University"
+                  value={profileData.University}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Harvard University"
+                  className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all pr-10"
+                  disabled={isLoading}
+                />
+                {profileData.University && (
+                  <button
+                    type="button"
+                    onClick={() => handleClearField("University")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--txt-dim)] hover:text-red-500 transition-colors"
+                    disabled={isLoading}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
               <label className="block text-md font-medium text-[var(--txt-dim)]">
                 Field of Study
               </label>
-              <input
-                type="text"
-                name="FieldOfStudy"
-                value={profileData.FieldOfStudy}
-                onChange={handleInputChange}
-                placeholder="e.g., Computer Science"
-                className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all"
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  name="FieldOfStudy"
+                  value={profileData.FieldOfStudy}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Computer Science"
+                  className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all pr-10"
+                  disabled={isLoading}
+                />
+                {profileData.FieldOfStudy && (
+                  <button
+                    type="button"
+                    onClick={() => handleClearField("FieldOfStudy")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--txt-dim)] hover:text-red-500 transition-colors"
+                    disabled={isLoading}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2 md:col-span-2">
               <label className="block text-md font-medium text-[var(--txt-dim)]">
                 Graduation Year
               </label>
-              <input
-                type="number"
-                name="GraduationYear"
-                value={profileData.GraduationYear}
-                onChange={handleInputChange}
-                placeholder="e.g., 2026"
-                min="1900"
-                max="2100"
-                className="w-full md:w-64 px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all"
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  name="GraduationYear"
+                  value={profileData.GraduationYear}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 2024"
+                  min="1900"
+                  max={new Date().getFullYear() + 10}
+                  className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all pr-10"
+                  disabled={isLoading}
+                />
+                {profileData.GraduationYear && (
+                  <button
+                    type="button"
+                    onClick={() => handleClearField("GraduationYear")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--txt-dim)] hover:text-red-500 transition-colors"
+                    disabled={isLoading}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Skills Section */}
-        <div className="space-y-2 p-6 py-2">
-          <label className="block text-md font-medium text-[var(--txt-dim)]">
-            Skills & Expertise
-          </label>
-
+        <div className="px-6 py-2">
           <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-md font-medium text-[var(--txt-dim)]">
+                Skills
+              </label>
+              {profileData.OtherDetails.skills && (
+                <button
+                  type="button"
+                  onClick={() => handleClearOtherDetails("skills")}
+                  className="text-[var(--txt-dim)] hover:text-red-500 transition-colors flex items-center gap-1 text-sm"
+                  disabled={isLoading}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Clear all
+                </button>
+              )}
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              {skillsList.map((skill, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 bg-[var(--bg-sec)] px-3 py-2 rounded-lg"
+                >
+                  <span className="text-[var(--txt)] text-sm">{skill}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeSkill(skill)}
+                    className="text-[var(--txt-dim)] hover:text-red-500 transition-colors"
+                    disabled={isLoading}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
             <div className="flex gap-2">
               <input
                 type="text"
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
-                placeholder="Add a skill (e.g., JavaScript, Design, Marketing)"
-                className="flex-1 px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all"
-                onKeyPress={(e) =>
-                  e.key === "Enter" && (e.preventDefault(), addSkill())
-                }
+                placeholder="Add a skill"
+                className="flex-1 px-4 py-2 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all"
                 disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={addSkill}
-                className="bg-sec hover:bg-[var(--btn-hover)] px-4 py-2 rounded-lg shadow-sm transition-colors flex items-center"
-                disabled={isLoading}
+                className="px-4 py-2 bg-[var(--btn)] hover:bg-[var(--btn-hover)] text-white rounded-lg transition-colors flex items-center gap-2"
+                disabled={isLoading || !newSkill.trim()}
               >
                 <Plus className="w-4 h-4" />
+                Add
               </button>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {skillsList.map((skill, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-3 py-1 bg-[var(--bg-sec)] text-[var(--txt)] rounded-full text-sm border border-gray-200"
-                >
-                  {skill}
-                  <button
-                    type="button"
-                    onClick={() => removeSkill(skill)}
-                    className="ml-2 text-[var(--txt-dim)] hover:text-red-500 transition-colors"
-                    disabled={isLoading}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
             </div>
           </div>
         </div>
 
         {/* Interests Section */}
-        <div className="space-y-2 p-6 py-2">
-          <label className="block text-md font-medium text-[var(--txt-dim)]">
-            Interests & Hobbies
-          </label>
-
+        <div className="px-6 py-2">
           <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-md font-medium text-[var(--txt-dim)]">
+                Interests
+              </label>
+              {profileData.OtherDetails.interests && (
+                <button
+                  type="button"
+                  onClick={() => handleClearOtherDetails("interests")}
+                  className="text-[var(--txt-dim)] hover:text-red-500 transition-colors flex items-center gap-1 text-sm"
+                  disabled={isLoading}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Clear all
+                </button>
+              )}
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              {interestsList.map((interest, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 bg-[var(--bg-sec)] px-3 py-2 rounded-lg"
+                >
+                  <span className="text-[var(--txt)] text-sm">{interest}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeInterest(interest)}
+                    className="text-[var(--txt-dim)] hover:text-red-500 transition-colors"
+                    disabled={isLoading}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
             <div className="flex gap-2">
               <input
                 type="text"
                 value={newInterest}
                 onChange={(e) => setNewInterest(e.target.value)}
-                placeholder="Add an interest (e.g., Photography, Travel, Gaming)"
-                className="flex-1 px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all"
-                onKeyPress={(e) =>
-                  e.key === "Enter" && (e.preventDefault(), addInterest())
-                }
+                placeholder="Add an interest"
+                className="flex-1 px-4 py-2 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all"
                 disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={addInterest}
-                className="bg-sec hover:bg-[var(--btn-hover)] px-4 py-2 rounded-lg shadow-sm transition-colors flex items-center"
-                disabled={isLoading}
+                className="px-4 py-2 bg-[var(--btn)] hover:bg-[var(--btn-hover)] text-white rounded-lg transition-colors flex items-center gap-2"
+                disabled={isLoading || !newInterest.trim()}
               >
                 <Plus className="w-4 h-4" />
+                Add
               </button>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {interestsList.map((interest, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-[var(--btn)] to-[var(--btn-hover)] rounded-full text-sm"
-                >
-                  {interest}
-                  <button
-                    type="button"
-                    onClick={() => removeInterest(interest)}
-                    className="ml-2 hover:text-red-200 transition-colors"
-                    disabled={isLoading}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
             </div>
           </div>
         </div>
 
         {/* Additional Notes Section */}
-        <div className="space-y-2 p-6 py-2">
-          <label className="block text-md font-medium text-[var(--txt-dim)]">
-            Additional Information
-          </label>
-          <textarea
-            value={profileData.OtherDetails.additionalNotes || ""}
-            onChange={(e) =>
-              handleOtherDetailsChange("additionalNotes", e.target.value)
-            }
-            placeholder="Any additional information about your education, certifications, achievements, or goals..."
-            className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all resize-none"
-            rows="4"
-            maxLength="500"
-            disabled={isLoading}
-          />
-          <div className="ml-auto w-fit text-xs text-[var(--txt-dim)]">
-            <span>
-              {(profileData.OtherDetails.additionalNotes || "").length}/500
-            </span>
+        <div className="px-6 py-2">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-md font-medium text-[var(--txt-dim)]">
+                Additional Notes
+              </label>
+              {profileData.OtherDetails.additionalNotes && (
+                <button
+                  type="button"
+                  onClick={() => handleClearOtherDetails("additionalNotes")}
+                  className="text-[var(--txt-dim)] hover:text-red-500 transition-colors flex items-center gap-1 text-sm"
+                  disabled={isLoading}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <textarea
+                value={profileData.OtherDetails.additionalNotes}
+                onChange={(e) =>
+                  handleOtherDetailsChange("additionalNotes", e.target.value)
+                }
+                placeholder="Any additional information about your education, achievements, or goals..."
+                className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all resize-none"
+                rows="4"
+                disabled={isLoading}
+              />
+            </div>
           </div>
         </div>
 
         {/* Submit Button */}
         <div className="flex justify-end">
           <UpdateButton
-            label="Update Profile"
+            label="Update Education & Skills"
             isLoading={isLoading}
             isDisabled={!hasChanged}
           />

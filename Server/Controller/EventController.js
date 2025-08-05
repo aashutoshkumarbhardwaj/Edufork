@@ -2,7 +2,14 @@ import Event from "../Model/EventModel.js";
 
 export const getAllEvents = async (req, res) => {
     try {
-        const events = await Event.find();
+        // Handle migration for events without createdBy field
+        await Event.updateMany(
+            { createdBy: { $exists: false } },
+            { $set: { createdBy: req.user._id } }
+        );
+
+        // Only return events created by the authenticated user
+        const events = await Event.find({ createdBy: req.user._id });
         res.status(200).json({ success: true, data: events });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -22,8 +29,9 @@ export const getEventByDate = async (req, res) => {
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
 
-        // Find events within the day range
+        // Find events within the day range for the authenticated user only
         const events = await Event.find({
+            createdBy: req.user._id,
             date: {
                 $gte: startOfDay,
                 $lte: endOfDay,
@@ -40,13 +48,18 @@ export const getEventByDate = async (req, res) => {
     }
 };
 
-
 export const getEventById = async (req, res) => {
     try {
-        const event = await Event.findById(req.params.id);
+        // Only allow users to access their own events
+        const event = await Event.findOne({ 
+            _id: req.params.id, 
+            createdBy: req.user._id 
+        });
+        
         if (!event) {
             return res.status(404).json({ success: false, error: "Event not found" });
         }
+        
         res.status(200).json({ success: true, data: event });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -62,7 +75,14 @@ export const createEvent = async (req, res) => {
             return res.status(400).json({ success: false, error: "Title, date, and time are required." });
         }
 
-        const newEvent = new Event({ title, date, time });
+        // Associate event with the authenticated user
+        const newEvent = new Event({ 
+            title, 
+            date, 
+            time, 
+            createdBy: req.user._id 
+        });
+        
         await newEvent.save();
         res.status(201).json({ success: true, data: newEvent });
     } catch (error) {
@@ -75,14 +95,15 @@ export const updateEvent = async (req, res) => {
         const { id } = req.params;
         const { title, date, time } = req.body;
 
-        const updatedEvent = await Event.findByIdAndUpdate(
-            id,
+        // Only allow users to update their own events
+        const updatedEvent = await Event.findOneAndUpdate(
+            { _id: id, createdBy: req.user._id },
             { title, date, time },
             { new: true, runValidators: true }
         );
 
         if (!updatedEvent) {
-            return res.status(404).json({ success: false, error: "Event not found" });
+            return res.status(404).json({ success: false, error: "Event not found or unauthorized" });
         }
 
         res.status(200).json({ success: true, data: updatedEvent });
@@ -91,13 +112,18 @@ export const updateEvent = async (req, res) => {
     }
 };
 
-
 export const deleteEvent = async (req, res) => {
     try {
-        const deletedEvent = await Event.findByIdAndDelete(req.params.id);
+        // Only allow users to delete their own events
+        const deletedEvent = await Event.findOneAndDelete({ 
+            _id: req.params.id, 
+            createdBy: req.user._id 
+        });
+        
         if (!deletedEvent) {
-            return res.status(404).json({ success: false, error: "Event not found" });
+            return res.status(404).json({ success: false, error: "Event not found or unauthorized" });
         }
+        
         res.status(200).json({ success: true, message: "Event deleted successfully" });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });

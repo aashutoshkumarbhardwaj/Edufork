@@ -13,6 +13,11 @@ const eventSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false  // Make it optional for backward compatibility
+    },
     createdAt: {
         type: Date,
         default: Date.now

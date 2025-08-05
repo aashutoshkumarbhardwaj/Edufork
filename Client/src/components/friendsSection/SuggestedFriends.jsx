@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { User, UserPlus, MoreVertical } from "lucide-react";
 const backendUrl = import.meta.env.VITE_API_URL;
@@ -6,6 +6,20 @@ const backendUrl = import.meta.env.VITE_API_URL;
 function SuggestedFriends({ onViewSentRequests }) {
   const [suggestedFriends, setSuggestedFriends] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdrownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdrownRef.current && !dropdrownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]); 
 
   const getAuthHeader = () => {
     const token = localStorage.getItem("token");
@@ -47,7 +61,7 @@ function SuggestedFriends({ onViewSentRequests }) {
     <section className="bg-sec rounded-3xl p-4 relative ">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-semibold txt">Suggested Friends</h3>
-        <div className="relative">
+        <div className="relative" ref={dropdrownRef}>
           <button onClick={() => setShowDropdown(!showDropdown)}>
             <MoreVertical className="w-5 h-5 txt" />
           </button>

@@ -7,22 +7,39 @@ const backendUrl = import.meta.env.VITE_API_URL;
 const EventPopup = ({ date, onClose, refreshEvents }) => {
   const [event, setEvent] = useState(null);
   const [title, setTitle] = useState("");
-  // Set default time to "08:00"
   const [time, setTime] = useState("08:00");
   const [id, setId] = useState("");
+
+  // Get authentication token from localStorage
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Authorization': `Bearer ${token}`
+    };
+  };
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          console.error('No authentication token found');
+          return;
+        }
+
         const response = await axios.get(
-          `${backendUrl}/events-by-date?date=${date}`
+          `${backendUrl}/events/-by-date?date=${date}`,
+          {
+            headers: getAuthHeaders()
+          }
         );
+        
         const eventData = response.data.data[0]; // Assuming one event per date
         if (eventData) {
           setId(eventData._id);
           setEvent(eventData);
           setTitle(eventData.title || "");
-          // Use event time or default to "08:00"
           setTime(eventData.time || "08:00");
         } else {
           setEvent(null);
@@ -30,7 +47,18 @@ const EventPopup = ({ date, onClose, refreshEvents }) => {
           setTime("08:00");
         }
       } catch (error) {
-        console.error("Error fetching event:", error);
+        // Handle case where no events found (404 is expected)
+        if (error.response?.status === 404) {
+          setEvent(null);
+          setTitle("");
+          setTime("08:00");
+        } else {
+          console.error("Error fetching event:", error);
+          // Handle unauthorized access
+          if (error.response?.status === 401) {
+            console.error('Unauthorized: Please log in again');
+          }
+        }
       }
     };
 
@@ -39,28 +67,55 @@ const EventPopup = ({ date, onClose, refreshEvents }) => {
 
   const handleCreateOrUpdate = async () => {
     try {
-      const eventData = { title, time, date };
-      if (id) {
-        await axios.put(`${backendUrl}/events/${id}`, eventData);
-      } else {
-        await axios.post(`${backendUrl}/events`, eventData);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        return;
       }
+
+      const eventData = { title, time, date };
+      const headers = getAuthHeaders();
+
+      if (id) {
+        await axios.put(`${backendUrl}/events/${id}`, eventData, { headers });
+      } else {
+        await axios.post(`${backendUrl}/events`, eventData, { headers });
+      }
+      
       refreshEvents();
       onClose();
     } catch (error) {
       console.error("Error saving event:", error);
+      // Handle unauthorized access
+      if (error.response?.status === 401) {
+        console.error('Unauthorized: Please log in again');
+      }
     }
   };
 
   const handleDelete = async () => {
     try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
       if (id) {
-        await axios.delete(`${backendUrl}/events/${id}`);
+        await axios.delete(`${backendUrl}/events/${id}`, {
+          headers: getAuthHeaders()
+        });
         refreshEvents();
         onClose();
       }
     } catch (error) {
       console.error("Error deleting event:", error);
+      // Handle unauthorized access
+      if (error.response?.status === 401) {
+        console.error('Unauthorized: Please log in again');
+      }
     }
   };
 

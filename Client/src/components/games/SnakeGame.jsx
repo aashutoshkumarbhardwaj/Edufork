@@ -1,10 +1,21 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import $ from "jquery";
 import "./snake.css";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 const SnakeGame = () => {
+
+  const [hiScore,setHiScore] = useState(0);
+
+  // fetches the prev hi score on mount
+  useEffect(()=>{
+    const prevHiScore = localStorage.getItem("snakeHiScore");
+    if(prevHiScore){
+      setHiScore(parseInt(prevHiScore));
+    }
+  },[])
+
   useEffect(() => {
     Math.PI2 = 2 * Math.PI;
     if (!window.requestAnimationFrame) {
@@ -170,6 +181,12 @@ const SnakeGame = () => {
         /* Prevent photoshopping */
         ctx.font = "30px" + scoreFont;
         var rScore = Math.round(score);
+
+        // Update high score if beaten
+        if (rScore > hiScore) {
+          localStorage.setItem("snakeHiScore", rScore);
+          setHiScore(rScore);
+        }
         ctx.textBaseline = "middle";
         ctx.save();
         ctx.translate(w * 0.5, h * 0.5 + 15);
@@ -413,7 +430,10 @@ const SnakeGame = () => {
           </div>
         </div>
       </div>
-      <canvas id="c"></canvas>
+      <div className="text-white font-semibold text-xs ml-4 mb-3">
+          High Score: {hiScore}
+        </div>
+      <canvas className="ml-10" id="c"></canvas>
       <div className="notice-pause">
         Use space or down to pause and space or up to resume.
       </div>

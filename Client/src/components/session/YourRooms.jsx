@@ -1,42 +1,56 @@
 import { useEffect, useState } from "react";
 import { PlusCircle } from "lucide-react";
 import axios from "axios";
-
+import { motion, AnimatePresence } from "framer-motion"; 
 import RoomCard from "./RoomCard";
 import CreateRoomModal from "./CreateRoomModal";
 
 export default function YourRooms({ myRooms }) {
   const [sessions, setSessions] = useState(myRooms);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState(null);
+
+  const backendUrl = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     setSessions(myRooms.map((r) => ({ ...r, joins: r.joins ?? 0 })));
   }, [myRooms]);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const backendUrl = import.meta.env.VITE_API_URL;
-  const token = localStorage.getItem("token");
 
   const handleCreate = async (data) => {
     try {
       const res = await axios.post(`${backendUrl}/session-room`, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(res);
-      setSessions((s) => [...s, res]);
+      setSessions((s) => [...s, res.data]); 
     } catch (err) {
       console.error("Create room failed:", err);
     }
   };
 
-  const handleDelete = async (room) => {
+  const handleDeleteClick = (room) => {
+    setRoomToDelete(room);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
     try {
-      await axios.delete(`${backendUrl}/session-room/${room._id}`, {
+      await axios.delete(`${backendUrl}/session-room/${roomToDelete._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSessions((s) => s.filter((r) => r._id !== room._id));
+      setSessions((s) => s.filter((r) => r._id !== roomToDelete._id));
     } catch (err) {
       console.error("Delete room failed:", err);
+    } finally {
+      setShowDeleteModal(false);
+      setRoomToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setRoomToDelete(null);
   };
 
   return (
@@ -48,7 +62,7 @@ export default function YourRooms({ myRooms }) {
           <RoomCard
             key={room._id}
             room={room}
-            onDelete={handleDelete}
+            onDelete={() => handleDeleteClick(room)}
             showCategory={true}
           />
         ))}
@@ -67,6 +81,46 @@ export default function YourRooms({ myRooms }) {
         onClose={() => setIsModalOpen(false)}
         onCreate={handleCreate}
       />
+
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            key="modal-backdrop"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              key="modal-content"
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 30 }}
+              transition={{ duration: 0.25 }}
+              className="bg-sec border border-white/20 rounded-2xl shadow-2xl p-6 max-w-sm w-[90%]"
+            >
+              <h2 className="text-xl text-[var(--txt)] font-semibold mb-2">Delete Room?</h2>
+              <p className="mb-6 text-[var(--txt-dim)] dark:text-gray-300 text-sm">
+                This action is permanent and cannot be undone.
+              </p>
+              <div className="flex justify-evenly gap-4">
+                <button
+                  onClick={confirmDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition w-32"
+                >
+                  Yes, Delete
+                </button>
+                <button
+                  onClick={cancelDelete}
+                  className="bg-ter text-[var(--txt)] px-4 py-2 rounded-lg hover:bg-primary font-medium transition w-32"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

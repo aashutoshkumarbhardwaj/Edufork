@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 import { useUserProfile } from "../../contexts/UserProfileContext";
-import { Camera, User } from "lucide-react";
+import { Camera, User, Trash2 } from "lucide-react";
 import UpdateButton from "./UpdateButton";
 const backendUrl = import.meta.env.VITE_API_URL;
 
@@ -24,6 +24,7 @@ export default function BasicInfo() {
   const fileInputRef = useRef(null);
   const [initialProfileData, setInitialProfileData] = useState(null);
   const [hasChanged, setHasChanged] = useState(false);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -49,7 +50,7 @@ export default function BasicInfo() {
         console.error("Error decoding token:", error);
       }
     }
-  }, [user]);
+  }, [user, fetchUserDetails]);
 
   useEffect(() => {
     if (!initialProfileData) return;
@@ -60,13 +61,20 @@ export default function BasicInfo() {
       ) || profilePic !== null;
 
     setHasChanged(isChanged);
-  }, [profileData, profilePic]);
+  }, [profileData, profilePic, initialProfileData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfileData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleClearField = (fieldName) => {
+    setProfileData((prev) => ({
+      ...prev,
+      [fieldName]: "",
     }));
   };
 
@@ -138,10 +146,9 @@ export default function BasicInfo() {
         }
       }
 
+      // Send all fields including empty ones to allow clearing
       const updateData = {
-        ...Object.fromEntries(
-          Object.entries(profileData).filter(([_, v]) => v !== "" && v !== null)
-        ),
+        ...profileData,
         ProfilePicture: profilePictureUrl,
       };
 
@@ -270,18 +277,30 @@ export default function BasicInfo() {
           <label className="block text-md font-medium text-[var(--txt-dim)]">
             Bio
           </label>
-          <textarea
-            name="Bio"
-            value={profileData.Bio}
-            onChange={handleInputChange}
-            placeholder="Tell us about yourself, your interests, and what makes you unique..."
-            className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all resize-none"
-            rows="4"
-            maxLength="500"
-            disabled={isProfileUpdateLoading}
-          />
-          <div className="ml-auto w-fit text-xs text-[var(--txt-dim)]">
-            <span>{profileData.Bio.length}/500</span>
+          <div className="relative">
+            <textarea
+              name="Bio"
+              value={profileData.Bio}
+              onChange={handleInputChange}
+              placeholder="Tell us about yourself, your interests, and what makes you unique..."
+              className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all resize-none pr-10"
+              rows="4"
+              maxLength="500"
+              disabled={isProfileUpdateLoading}
+            />
+            {profileData.Bio && (
+              <button
+                type="button"
+                onClick={() => handleClearField("Bio")}
+                className="absolute right-3 top-3 text-[var(--txt-dim)] hover:text-red-500 transition-colors"
+                disabled={isProfileUpdateLoading}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+            <div className="ml-auto w-fit text-xs text-[var(--txt-dim)]">
+              <span>{profileData.Bio.length}/500</span>
+            </div>
           </div>
         </div>
 
@@ -291,34 +310,58 @@ export default function BasicInfo() {
             <label className="block text-md font-medium text-[var(--txt-dim)]">
               Country
             </label>
-            <input
-              type="text"
-              name="Country"
-              value={profileData.Country}
-              onChange={handleInputChange}
-              placeholder="Select your country"
-              className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all"
-              disabled={isProfileUpdateLoading}
-            />
+            <div className="relative">
+              <input
+                type="text"
+                name="Country"
+                value={profileData.Country}
+                onChange={handleInputChange}
+                placeholder="Select your country"
+                className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] placeholder-[var(--txt-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all pr-10"
+                disabled={isProfileUpdateLoading}
+              />
+              {profileData.Country && (
+                <button
+                  type="button"
+                  onClick={() => handleClearField("Country")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--txt-dim)] hover:text-red-500 transition-colors"
+                  disabled={isProfileUpdateLoading}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
             <label className="block text-md font-medium text-[var(--txt-dim)]">
               Gender
             </label>
-            <select
-              name="Gender"
-              value={profileData.Gender}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all"
-              disabled={isProfileUpdateLoading}
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-              <option value="Prefer not to say">Prefer not to say</option>
-            </select>
+            <div className="relative">
+              <select
+                name="Gender"
+                value={profileData.Gender}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-[var(--bg-sec)] border border-transparent rounded-lg text-[var(--txt)] focus:outline-none focus:ring-2 focus:ring-[var(--btn)] focus:border-transparent transition-all pr-10"
+                disabled={isProfileUpdateLoading}
+              >
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+              {profileData.Gender && (
+                <button
+                  type="button"
+                  onClick={() => handleClearField("Gender")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--txt-dim)] hover:text-red-500 transition-colors"
+                  disabled={isProfileUpdateLoading}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

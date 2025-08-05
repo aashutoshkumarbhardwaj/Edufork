@@ -1,3 +1,7 @@
+import { useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
+import { useUserProfile } from "@/contexts/UserProfileContext";
+import NotLogedInPage from "@/components/NotLogedInPage";
 import ProfileCard from "../components/stats/ProfileCard";
 import MonthlyLevel from "../components/stats/MonthlyLevel";
 import Achievements from "../components/stats/Achievements";
@@ -9,15 +13,33 @@ import Test from "../components/stats/Test.jsx";
 import AdCard from "@/components/AdCard";
 
 const Stats = () => {
+  const { user, fetchUserDetails } = useUserProfile(); // ✅ correct usage
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        fetchUserDetails(decoded.id); // ✅ fetch full user info
+      } catch (err) {
+        console.error("Error decoding token:", err);
+      }
+    }
+  }, []);
+
+  if (!user) {
+    return <NotLogedInPage />;
+  }
+
   return (
     <div className="m-6 ">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Anaylitics</h1>
+        <h1 className="text-2xl font-bold">Analytics</h1>
         <div className="flex items-center gap-4">
-          <span className="text-gray-400">Great! keep it up</span>
+          <span className="text-gray-400">Great! Keep it up</span>
         </div>
       </div>
-      {/* content */}
+
       <div className="flex flex-col lg:flex-row gap-6 w-full content-center">
         <div className="lg:w-[20%] min-w-72 space-y-6">
           <ProfileCard />
